@@ -79,7 +79,6 @@ func Choose() {
 		ListStat(l)
 	case "0":
 		breaked = true
-		break
 	default:
 		Choose()
 	}
@@ -279,7 +278,7 @@ func ListAvailableBooksInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to see list of Available pls fill the following")
 	books := l.ListAvailableBooks()
 	fmt.Printf("%v %v \n", "", "*********************************************")
-	fmt.Printf("%v %v %v\n", "", "Available Books")
+	fmt.Printf("%v %v\n", "", "Available Books")
 	fmt.Printf("%v %v \n", "", "*********************************************")
 	fmt.Printf("\t%v \t%-20v \t%-20v \t%v\n", "ID", "Title", "Author", "Status")
 	fmt.Println("-----------------------------------------------------------------------------------")
