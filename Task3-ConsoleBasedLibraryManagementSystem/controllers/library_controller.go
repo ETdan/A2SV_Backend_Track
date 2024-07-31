@@ -11,10 +11,28 @@ import (
 )
 
 var l = service.Library{
-	Curr_book_ID:   0,
-	Curr_member_ID: 0,
-	Books:          map[int]models.Book{},
-	Meambers:       map[int]models.Member{},
+	Curr_book_ID:   4,
+	Curr_member_ID: 4,
+	Books: map[int]models.Book{
+		1: {ID: 1, Title: "To Kill a Mockingbird", Author: "Harper Lee", Status: "Borrowed"},
+		2: {ID: 2, Title: "1984", Author: "George Orwell", Status: "Borrowed"},
+		3: {ID: 3, Title: "Moby Dick", Author: "Herman Melville", Status: "Available"},
+	},
+	Meambers: map[int]models.Member{
+		1: {
+			ID:   1,
+			Name: "Alice Smith",
+			BorrowedBooks: []models.Book{
+				{ID: 2, Title: "1984", Author: "George Orwell", Status: "Borrowed"},
+			},
+		},
+		2: {
+			ID:   2,
+			Name: "Bob Johnson",
+			BorrowedBooks: []models.Book{
+				{ID: 1, Title: "To Kill a Mockingbird", Author: "Harper Lee", Status: "Borrowed"},
+			},
+		}},
 }
 
 func Choose() {
@@ -72,27 +90,73 @@ func Choose() {
 	}
 }
 
+// Done
 func ListStat(l service.Library) {
 	fmt.Println("you choosed to See Stat")
-	fmt.Printf("No of Book:%v No of Members%v\n", l.Curr_book_ID, l.Curr_member_ID)
+	fmt.Printf("\tNo of Book:%v \n\tNo of Members%v\n", l.Curr_book_ID, l.Curr_member_ID)
 }
+
+// Done
 func ListMembers(l service.Library) {
 	fmt.Println("you choosed List members ")
-	fmt.Println(l.ListMembers())
-}
-func ListBooks(l service.Library) {
-	fmt.Println("you choosed to list books ")
-	fmt.Println(l.ListBooks())
-}
-func AddBookInput(l *service.Library, reader *bufio.Reader) {
-	fmt.Println("you choosed to add A book pls fill the following")
-	fmt.Print("Title: ")
-	title, _ := reader.ReadString('\n')
-	title = strings.TrimSpace(title)
 
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("%v %v \n", "", "Members")
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("\t%v \t%-20v \t%v\n", "ID", "Name", "Borrowed Books")
+	fmt.Println("-----------------------------------------------------------------------------------")
+	for _, member := range l.ListMembers() {
+		fmt.Printf("\t%v \t%-20v \t%v\n", member.ID, member.Name, formatUserBorrowedBooks(member.BorrowedBooks))
+		fmt.Println("-----------------------------------------------------------------------------------")
+
+	}
+}
+
+// Done
+func ListBooks(l service.Library) {
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("%v %v \n", "", "Books")
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("\t%v \t%-20v \t%v \t%v\n", "ID", "Title", "Author", "Status")
+	fmt.Println("-----------------------------------------------------------------------------------")
+	for _, book := range l.ListBooks() {
+		fmt.Printf("\t%v \t%-25v \t%-20v \t%v\n", book.ID, book.Title, book.Author, book.Status)
+		fmt.Println("-----------------------------------------------------------------------------------")
+
+	}
+}
+
+// Done
+func AddBookInput(l *service.Library, reader *bufio.Reader) {
+	var author string
+	var title string
+
+	fmt.Println("you choosed to add A book pls fill the following")
+
+	fmt.Print("Title: ")
+
+	for {
+		title, _ = reader.ReadString('\n')
+		title = strings.TrimSpace(title)
+		if title == "" {
+			fmt.Println("Title must not be empty ")
+			fmt.Print("Title: ")
+		} else {
+			break
+		}
+	}
 	fmt.Print("Author: ")
-	author, _ := reader.ReadString('\n')
-	author = strings.TrimSpace(author)
+	for {
+		author, _ = reader.ReadString('\n')
+		author = strings.TrimSpace(author)
+		if author == "" {
+			fmt.Println("Author must not be empty ")
+			fmt.Print("Author: ")
+		} else {
+			break
+		}
+	}
+
 	b := models.Book{
 		ID:     l.Curr_book_ID,
 		Title:  title,
@@ -117,6 +181,7 @@ func AddMemberInput(l *service.Library, reader *bufio.Reader) {
 	l.AddMeamber(m)
 }
 
+// Done
 func RemoveBookInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to Remove a Book pls fill the following")
 	fmt.Print("Book ID: ")
@@ -124,56 +189,147 @@ func RemoveBookInput(l *service.Library, reader *bufio.Reader) {
 	BookId = strings.TrimSpace(BookId)
 	bookId, _ := strconv.Atoi(BookId)
 	l.RemoveBook(bookId)
-	fmt.Println("you successfuly Removed a Book")
+
 }
+
+// Done
 func ReturnBookInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to Return a Book pls fill the following")
+
 	fmt.Print("Member ID: ")
-	MemberId, _ := reader.ReadString('\n')
+	MemberId := ""
+	for {
+		MemberId, _ = reader.ReadString('\n')
+		if isInteger(MemberId) {
+			break
+		}
+		fmt.Println("Member ID Must be a Number")
+		fmt.Print("Member ID: ")
+
+	}
 	MemberId = strings.TrimSpace(MemberId)
 	memberID, _ := strconv.Atoi(MemberId)
+
 	fmt.Print("Book ID: ")
-	BookId, _ := reader.ReadString('\n')
+	BookId := ""
+	for {
+		BookId, _ = reader.ReadString('\n')
+		if isInteger(BookId) {
+			break
+		}
+		fmt.Println("Book ID Must be a Number")
+		fmt.Print("Member ID: ")
+
+	}
+
 	BookId = strings.TrimSpace(BookId)
 	bookId, _ := strconv.Atoi(BookId)
-	if l.ReturnBook(bookId, memberID) == nil {
-
+	s := l.ReturnBook(bookId, memberID)
+	if s == nil {
 		fmt.Println("you successfuly Returned a Book")
 	} else {
-		fmt.Println("No Data found with the given input")
+		fmt.Println(s)
 	}
 }
+
+// Done
 func BorrowBookInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to Borrow a Book pls fill the following")
+
 	fmt.Print("Member ID: ")
-	MemberId, _ := reader.ReadString('\n')
+	MemberId := ""
+	for {
+		MemberId, _ = reader.ReadString('\n')
+		if isInteger(MemberId) {
+			break
+		}
+		fmt.Println("Member ID Must be a Number")
+		fmt.Print("Member ID: ")
+
+	}
 	MemberId = strings.TrimSpace(MemberId)
 	memberID, _ := strconv.Atoi(MemberId)
+
 	fmt.Print("Book ID: ")
-	BookId, _ := reader.ReadString('\n')
+	BookId := ""
+	for {
+		BookId, _ = reader.ReadString('\n')
+		if isInteger(BookId) {
+			break
+		}
+		fmt.Println("Book ID Must be a Number")
+		fmt.Print("Member ID: ")
+
+	}
+
 	BookId = strings.TrimSpace(BookId)
 	bookId, _ := strconv.Atoi(BookId)
-	l.BorrowBook(bookId, memberID)
 
-	if l.BorrowBook(bookId, memberID) == nil {
+	s := l.BorrowBook(bookId, memberID)
+	// fmt.Printf("%T %v %T %v", bookId, bookId, memberID, memberID)
+	if s == nil {
 		fmt.Println("you successfuly Borrowed a Book")
 	} else {
-		fmt.Println("No Data found with the given input")
+		fmt.Println(s)
 	}
 }
+
+// Done
 func ListAvailableBooksInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to see list of Available pls fill the following")
 	books := l.ListAvailableBooks()
-	fmt.Println(books)
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("%v %v %v\n", "", "Available Books")
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("\t%v \t%-20v \t%-20v \t%v\n", "ID", "Title", "Author", "Status")
+	fmt.Println("-----------------------------------------------------------------------------------")
+	for _, book := range books {
+		fmt.Printf("\t%v \t%-20v \t%-20v \t%v\n", book.ID, book.Title, book.Author, book.Status)
+		fmt.Println("-----------------------------------------------------------------------------------")
+	}
 }
+
+// Done
 func ListBorrowedBooksInput(l *service.Library, reader *bufio.Reader) {
 	fmt.Println("you choosed to see LIst of Borrowed Books pls fill the following")
 	fmt.Print("Member ID: ")
+	MemberId := ""
+	for {
+		MemberId, _ = reader.ReadString('\n')
+		if isInteger(MemberId) {
+			break
+		}
+		fmt.Println("Member ID Must be a Number")
+		fmt.Print("Member ID: ")
 
-	MemberId, _ := reader.ReadString('\n')
+	}
 	MemberId = strings.TrimSpace(MemberId)
 	memberID, _ := strconv.Atoi(MemberId)
 
 	books := l.ListBorrowedBooks(memberID)
-	fmt.Println(books)
+
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("%v %v %v\n", "", "Books Borrowed By ", l.Meambers[memberID].Name)
+	fmt.Printf("%v %v \n", "", "*********************************************")
+	fmt.Printf("\t%v \t%-20v \t%-20v \t%v\n", "ID", "Title", "Author", "Status")
+	fmt.Println("-----------------------------------------------------------------------------------")
+	for _, book := range books {
+		fmt.Printf("\t%v \t%-20v \t%-20v \t%v\n", book.ID, book.Title, book.Author, book.Status)
+		fmt.Println("-----------------------------------------------------------------------------------")
+
+	}
+}
+
+func formatUserBorrowedBooks(books []models.Book) string {
+	f := ""
+	for _, val := range books {
+		f += val.Title + " by " + val.Author + " | "
+	}
+	return f
+}
+
+func isInteger(s string) bool {
+	s = strings.TrimSpace(s)
+	_, err := strconv.Atoi(s)
+	return err == nil
 }
