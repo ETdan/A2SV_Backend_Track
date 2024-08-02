@@ -20,7 +20,7 @@ var Collection *mongo.Collection
 func StartMongoDB() {
 	// Set client options
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().ApplyURI("mongodb+srv://ETdan:kRPGzScrfbHSH4Gt@cluster0.f79ysrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").SetServerAPIOptions(serverAPI)
+	clientOptions := options.Client().ApplyURI("mongodb+srv://ETdan:<password>@cluster0.f79ysrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").SetServerAPIOptions(serverAPI)
 
 	// Connect to MongoDB
 	var err error
