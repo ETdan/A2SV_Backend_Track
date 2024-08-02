@@ -2,97 +2,155 @@ package data
 
 import (
 	"TaskManagerWithMongoDB/models"
+	"context"
 	"errors"
 	"fmt"
+	"log"
 
-	"github.com/go-playground/validator/v10"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var Data = map[string]models.Task{
-	"1": {
-		ID:       "1",
-		Name:     "Task 1",
-		Detail:   "Detail for Task 1",
-		Start:    "2024-07-31T08:00:00Z",
-		Duration: "1h",
-	},
-	"2": {
-		ID:       "2",
-		Name:     "Task 2",
-		Detail:   "Detail for Task 2",
-		Start:    "2024-07-31T09:00:00Z",
-		Duration: "2h",
-	},
-	"3": {
-		ID:       "3",
-		Name:     "Task 3",
-		Detail:   "Detail for Task 3",
-		Start:    "2024-07-31T10:00:00Z",
-		Duration: "30m",
-	},
-	"4": {
-		ID:       "4",
-		Name:     "Task 4",
-		Detail:   "Detail for Task 4",
-		Start:    "2024-07-31T10:30:00Z",
-		Duration: "1h 15m",
-	},
-}
+var client *mongo.Client
+var DB *mongo.Database
+var Collection *mongo.Collection
 
-func AddTask(task models.Task) (models.Task, error) {
+func StartMongoDB() {
+	// Set client options
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().ApplyURI("mongodb+srv://ETdan:kRPGzScrfbHSH4Gt@cluster0.f79ysrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").SetServerAPIOptions(serverAPI)
 
-	validator := validator.New()
-	err := validator.Struct(task)
+	// Connect to MongoDB
+	var err error
+	client, err = mongo.Connect(context.TODO(), clientOptions)
+	DB = client.Database("taskManager")
+	Collection = DB.Collection("tasks")
+	// .Collection("tasks")
+
 	if err != nil {
-		return models.Task{}, errors.New("a task must have an id")
+		log.Fatal(err)
+	} else {
+		fmt.Println("Connected to MongoDB!")
 	}
-	_, exists := Data[task.ID]
-	if !exists {
-		Data[task.ID] = task
-		return task, nil
+	// Check the connection
+	if err = client.Ping(context.TODO(), nil); err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
 	}
-
-	fmt.Println("no Data")
-	return models.Task{}, errors.New("a task with this id exists")
+	// disconnect with the db
+	// defer func() {
+	// 	if err = client.Disconnect(context.TODO()); err != nil {
+	// 		panic(err)
+	// 	} else {
+	// 		fmt.Println("Connection to MongoDB closed.")
+	// 	}
+	// }()
 }
-func GetAllTask() map[string]models.Task {
-	return Data
+
+var Data = map[string]models.Task{}
+
+func AddTask(task models.Task) (*mongo.InsertOneResult, error) {
+	// fmt.Println(client.Database("taskManager").Collection("tasks").CountDocuments(context.TODO(), bson.D{{}}))
+
+	result, err := Collection.InsertOne(context.TODO(), task)
+	if err != nil {
+		return nil, err
+	} else {
+		return result, nil
+	}
+}
+func GetAllTask() ([]models.Task, error) {
+	findOptions := options.Find()
+
+	var data []models.Task
+	var task models.Task
+
+	cursor, err := Collection.Find(context.TODO(), bson.D{{}}, findOptions)
+
+	if err == nil {
+		for cursor.Next(context.TODO()) {
+			err := cursor.Decode(&task)
+			if err == nil {
+				data = append(data, task)
+			} else {
+				return []models.Task{}, err
+			}
+		}
+		return data, nil
+	}
+	return []models.Task{}, err
 }
 func GetTask(id string) (models.Task, error) {
-	val, exists := Data[id]
-	if !exists {
-		fmt.Println("no Data")
-		return models.Task{}, errors.New("no task with this ID")
+	var task models.Task
+	ID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return models.Task{}, err
 	}
-	return val, nil
+	err = Collection.FindOne(context.TODO(), bson.D{{Key: "_id", Value: ID}}).Decode(&task)
+
+	if err != nil {
+		return models.Task{}, err
+	}
+	return task, nil
 }
 func DeleteTask(id string) (models.Task, error) {
-	if val, ok := Data[id]; ok {
-		delete(Data, id)
-		return val, nil
+	var task models.Task
+	ID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return models.Task{}, err
 	}
-	return models.Task{}, errors.New("NO such Task ID")
+	// fmt.Println(ID)
+	err = Collection.FindOneAndDelete(context.TODO(), bson.D{{Key: "_id", Value: ID}}).Decode(&task)
+
+	if err != nil {
+		return models.Task{}, err
+	}
+	return task, nil
 }
 func UpdateTask(task models.Task, id string) (models.Task, error) {
-
-	if val, ok := Data[id]; ok {
-		if task.Detail != "" {
-			val.Detail = task.Detail
-		}
-		if task.Duration != "" {
-			val.Duration = task.Duration
-		}
-		if task.ID != "" {
-			val.ID = task.ID
-		}
-		if task.Name != "" {
-			val.Name = task.Name
-		}
-		if task.Start != "" {
-			val.Start = task.Start
-		}
-		Data[id] = val
-		return Data[id], nil
+	// var updatedTask models.Task
+	ID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return models.Task{}, err
 	}
-	return models.Task{}, errors.New("NO Data Such ID")
+	fmt.Println(ID)
+	updateFields := bson.M{}
+	if task.Name != "" {
+		updateFields["name"] = task.Name
+	}
+	if task.Detail != "" {
+		updateFields["detail"] = task.Detail
+	}
+	if task.Start != "" {
+		updateFields["start"] = task.Start
+	}
+	if task.Duration != "" {
+		updateFields["duration"] = task.Duration
+	}
+	// updateFields["_id"] = ID
+
+	// Check if there are fields to update
+	if len(updateFields) == 0 {
+		return models.Task{}, err
+	}
+
+	// Define the filter and update
+	filter := bson.M{"_id": ID}
+	update := bson.M{"$set": updateFields}
+
+	// Perform the update operation
+	result, err := Collection.UpdateOne(context.TODO(), filter, update)
+	fmt.Println(result)
+	if err != nil {
+		return models.Task{}, err
+	}
+	// Send the response
+	if result.MatchedCount == 0 {
+		return models.Task{}, errors.New("Document not found")
+	} else {
+		return task, nil
+	}
 }

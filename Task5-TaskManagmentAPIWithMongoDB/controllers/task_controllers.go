@@ -8,6 +8,7 @@ import (
 	"TaskManagerWithMongoDB/models"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // data.Data = {
@@ -20,10 +21,14 @@ import (
 // Done
 func GetAllTask(c *gin.Context) {
 	fmt.Println(data.Data)
-	c.JSON(http.StatusOK, data.GetAllTask())
+	Data, err := data.GetAllTask()
+	if err == nil {
+		c.JSON(http.StatusOK, Data)
+	} else {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
+	}
 }
 
-// Done
 func GetTask(c *gin.Context) {
 
 	id := c.Param("id")
@@ -70,7 +75,6 @@ func DeleteTask(c *gin.Context) {
 	}
 }
 
-// Done
 func PostTask(c *gin.Context) {
 
 	var task models.Task
@@ -78,6 +82,8 @@ func PostTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	task.ID = primitive.NewObjectID()
 
 	val, err := data.AddTask(task)
 	if err == nil {

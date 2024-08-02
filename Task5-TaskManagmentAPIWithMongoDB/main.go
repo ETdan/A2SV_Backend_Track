@@ -1,15 +1,10 @@
 package main
 
 import (
-	// "TaskManagerWithMongoDB/router"
-	"context"
-	"fmt"
-	"log"
+	"TaskManagerWithMongoDB/data"
+	"TaskManagerWithMongoDB/router"
 
-	// "github.com/gin-gonic/gin"
-
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/gin-gonic/gin"
 )
 
 type Trainer struct {
@@ -19,35 +14,53 @@ type Trainer struct {
 }
 
 func main() {
-	// ash := Trainer{"Ash", 10, "Pallet Town"}
-	// misty := Trainer{"Misty", 10, "Cerulean City"}
-	// brock := Trainer{"Brock", 15, "Pewter City"}
+	/*
+		// ash := Trainer{"Ash", 10, "Pallet Town"}
+		// misty := Trainer{"Misty", 10, "Cerulean City"}
+		// brock := Trainer{"Brock", 15, "Pewter City"}
 
-	// trainers := []interface{}{misty, brock}
+		// trainers := []interface{}{misty, brock}
 
-	// Set client options
+		// Set client options
+		serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+		clientOptions := options.Client().ApplyURI("mongodb+srv://ETdan:kRPGzScrfbHSH4Gt@cluster0.f79ysrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").SetServerAPIOptions(serverAPI)
 
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	clientOptions := options.Client().ApplyURI("mongodb+srv://ETdan:kRPGzScrfbHSH4Gt@cluster0.f79ysrp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").SetServerAPIOptions(serverAPI)
+		// Connect to MongoDB
+		client, err := mongo.Connect(context.TODO(), clientOptions)
+		if err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("Connected to MongoDB!")
+		}
+		// Check the connection
+		if err = client.Ping(context.TODO(), nil); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
+		}
+		// disconnect with the db
+		defer func() {
+			if err = client.Disconnect(context.TODO()); err != nil {
+				panic(err)
+			} else {
+				fmt.Println("Connection to MongoDB closed.")
+			}
+		}()
 
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Connected to MongoDB!")
-
-	// connect to db test and then represent trainers by colleciton
-	// collection := client.Database("test").Collection("trainers")
-	// fmt.Println(collection.CountDocuments(context.TODO(), bson.D{{}}))
+		// connect to db test and then represent trainers by colleciton
+		Collection := client.Database("taskManager").Collection("tasks")
+		// t := map[string]models.Task{
+		// 	"1": {
+		// 		ID:       "1",
+		// 		Name:     "Task 1",
+		// 		Detail:   "Detail for Task 1",
+		// 		Start:    "2024-07-31T08:00:00Z",
+		// 		Duration: "1h",
+		// 	},
+		// }
+		// Collection.InsertOne(context.TODO(), t)
+		fmt.Println(Collection.CountDocuments(context.TODO(), bson.D{{}}))
+	*/
 	/*
 		// insert one document(record)
 		result, err := collection.InsertOne(context.TODO(), ash)
@@ -112,16 +125,9 @@ func main() {
 			fmt.Println(results)
 		}
 	*/
-	// disconnect with the db
-	err = client.Disconnect(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Connection to MongoDB closed.")
-
-	// r := gin.Default()
-	// r = router.Router(r)
-	// r.Run()
+	data.StartMongoDB()
+	r := gin.Default()
+	r = router.Router(r)
+	r.Run()
 
 }
