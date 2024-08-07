@@ -53,7 +53,11 @@ func GetAllTask(c *gin.Context) {
 		}
 	}
 	if err == nil {
-		c.JSON(http.StatusOK, Data)
+		if len(Data) == 0 {
+			c.JSON(http.StatusOK, gin.H{"message": "There is no Task created by user"})
+		} else {
+			c.JSON(http.StatusOK, Data)
+		}
 	} else {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 	}
