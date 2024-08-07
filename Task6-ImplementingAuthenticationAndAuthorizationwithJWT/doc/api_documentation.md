@@ -1,8 +1,6 @@
-Here's the updated documentation with additional information about environment variables, MongoDB URL, and secret keys:
+# 📝 Task Manager API Documentation
 
 ---
-
-# 📝 Task Manager API Documentation
 
 Welcome to the **Task Manager API** documentation! This guide will help you understand how to interact with our API endpoints to manage your tasks. 🎯
 
