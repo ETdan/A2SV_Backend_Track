@@ -1,3 +1,7 @@
+Here's the updated documentation with additional information about environment variables, MongoDB URL, and secret keys:
+
+---
+
 # 📝 Task Manager API Documentation
 
 Welcome to the **Task Manager API** documentation! This guide will help you understand how to interact with our API endpoints to manage your tasks. 🎯
@@ -141,6 +145,26 @@ All requests require JWT authentication. Use the JWT token provided upon login t
   "exp": "Expiration"
 }
 ```
+
+---
+
+## 🌐 Environment Setup
+
+To run this API, you'll need to configure the following environment variables. Create a `.env` file in the root directory of the project and add these variables:
+
+- **`MONGO_URL`**: MongoDB connection URL.
+- **`SECRET_KEY`**: Secret key used for signing JWT tokens.
+
+Example `.env` file:
+
+```
+MONGO_URL=your_mongodb_url
+SECRET_KEY=your_secret_key
+```
+
+Make sure to replace `your_mongodb_url` and `your_secret_key` with your actual MongoDB URL and a secure secret key.
+
+**Note:** These environment variables are crucial for the application to run properly and should be kept secure.
 
 ---
 
