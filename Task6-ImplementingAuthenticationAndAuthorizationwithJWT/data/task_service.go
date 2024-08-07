@@ -21,9 +21,9 @@ var UsersCollection *mongo.Collection
 
 func StartMongoDB() {
 
-	fmt.Println("/////////////////////////////////////////")
-	fmt.Println(os.Getenv("DATABASE_URL"))
-	fmt.Println("//////////////////////////////////////////")
+	// fmt.Println("/////////////////////////////////////////")
+	// fmt.Println(os.Getenv("DATABASE_URL"))
+	// fmt.Println("//////////////////////////////////////////")
 	// Set client options
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().ApplyURI(os.Getenv("DATABASE_URL")).SetServerAPIOptions(serverAPI)
