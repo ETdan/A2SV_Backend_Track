@@ -7,6 +7,7 @@ import (
 	repositories "TaskManager/task-manager/Repositories"
 	usecases "TaskManager/task-manager/Usecases"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -14,14 +15,15 @@ import (
 
 // var router *gin.Engine
 func Setup(r *gin.Engine) *gin.Engine {
-	database := db.Database{
-		Url: os.Getenv("DATABASE_URL"),
-	}
+	database := db.Database{Url: os.Getenv("DATABASE_URL")}
+	fmt.Println(os.Getenv("DATABASE_URL"), os.Getenv("USER_COLLECTION"), os.Getenv("TASK_COLLECTION"))
+
 	if err := database.Connect(os.Getenv("DATABASE"), os.Getenv("USER_COLLECTION"), os.Getenv("TASK_COLLECTION")); err != nil {
-		fmt.Println(err)
+		log.Fatal("could not connect with DB", err)
 	}
 
-	middleare := infrastucture.Middleware{}
+	service := infrastucture.NewService()
+	middleare := infrastucture.NewMiddleware(service)
 
 	userRepo := repositories.NewUserRepository(*database.Database, *database.UserCollection)
 	taskRepo := repositories.NewTaskRepository(database, *database.Database, *database.TaskCollection)
@@ -29,10 +31,7 @@ func Setup(r *gin.Engine) *gin.Engine {
 	userUsecase := usecases.NewUserUsecase(userRepo)
 	taskUsecase := usecases.NewTaskUsecase(taskRepo)
 
-	c := controller.Controller{
-		TaskUsecase: taskUsecase,
-		UserUsecase: userUsecase,
-	}
+	c := controller.NewController(userUsecase, taskUsecase)
 
 	r.GET("/tasks", middleare.Auth_middleware(), c.GetAllTasks)
 	r.GET("/tasks/:id", middleare.Auth_middleware(), c.GetTaskByID)

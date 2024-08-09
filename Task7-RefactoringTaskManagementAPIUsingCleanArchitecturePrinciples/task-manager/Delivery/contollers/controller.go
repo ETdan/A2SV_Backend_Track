@@ -2,7 +2,6 @@ package controller
 
 import (
 	domain "TaskManager/task-manager/Domain"
-	usecases "TaskManager/task-manager/Usecases"
 	"fmt"
 	"net/http"
 
@@ -11,19 +10,15 @@ import (
 )
 
 type Controller struct {
-	UserUsecase usecases.UserUsecase
-	TaskUsecase usecases.TaskUsecase
+	UserUsecase domain.UserUsecase
+	TaskUsecase domain.TaskUsecase
 }
-type ControllerInterface interface {
-	RegisterUser(*gin.Context)
-	RegisterAdmin(c *gin.Context)
-	LoginUser(c *gin.Context)
 
-	GetAllTasks(c *gin.Context)
-	GetTaskByID(c *gin.Context)
-	AddTask(c *gin.Context)
-	UpdateTaskByID(c *gin.Context)
-	DeleteTaskByID(c *gin.Context)
+func NewController(uu domain.UserUsecase, tu domain.TaskUsecase) *Controller {
+	return &Controller{
+		UserUsecase: uu,
+		TaskUsecase: tu,
+	}
 }
 
 func (controller *Controller) RegisterUser(c *gin.Context) {
@@ -85,24 +80,21 @@ func (controller *Controller) GetAllTasks(c *gin.Context) {
 
 		} else {
 			tasks, err := controller.TaskUsecase.GetAllTasks(jwtClaims["role"].(string), jwtClaims["user_id"].(string))
-			// fmt.Println(jwtClaims)
-			fmt.Println("///////////////////////")
-			fmt.Println(jwtClaims["user_id"])
-			fmt.Println(jwtClaims["role"])
-			fmt.Println(jwtClaims["user_id"])
-			// fmt.Println(tasks, err)
-			fmt.Println("///////////////////////")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"message:": err.Error()})
 				c.Abort()
 			} else {
-				c.JSON(http.StatusOK, gin.H{"tasks:": tasks})
+				if len(tasks) == 0 {
+					c.JSON(http.StatusOK, gin.H{"tasks:": "this user got no tasks"})
+				} else {
+					c.JSON(http.StatusOK, gin.H{"tasks:": tasks})
+				}
 			}
 		}
 	}
-
 }
 func (controller *Controller) GetTaskByID(c *gin.Context) {
+	id := c.Param("id")
 	if claims, ok := c.Get("claims"); !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not find token claims"})
 		c.Abort()
@@ -114,14 +106,8 @@ func (controller *Controller) GetTaskByID(c *gin.Context) {
 			return
 
 		} else {
-			tasks, err := controller.TaskUsecase.GetTaskByID(jwtClaims["role"].(string), jwtClaims["user_id"].(string), jwtClaims["task_id"].(string))
-			// // fmt.Println(jwtClaims)
-			// fmt.Println("///////////////////////")
-			// fmt.Println(jwtClaims["user_id"])
-			// fmt.Println(jwtClaims["role"])
-			// fmt.Println(jwtClaims["user_id"])
-			// // fmt.Println(tasks, err)
-			// fmt.Println("///////////////////////")
+			// fmt.Println(jwtClaims["role"].(string), jwtClaims["user_id"].(string), id)
+			tasks, err := controller.TaskUsecase.GetTaskByID(jwtClaims["role"].(string), jwtClaims["user_id"].(string), id)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"message:": err.Error()})
 				c.Abort()
@@ -131,8 +117,80 @@ func (controller *Controller) GetTaskByID(c *gin.Context) {
 		}
 	}
 }
-func (controller *Controller) AddTask(c *gin.Context) {}
+func (controller *Controller) AddTask(c *gin.Context) {
+	if claims, ok := c.Get("claims"); !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not find token claims"})
+		c.Abort()
+		return
+	} else {
+		if jwtClaims, ok := claims.(jwt.MapClaims); !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not converts claims"})
+			c.Abort()
+			return
+
+		} else {
+			var task domain.Task
+			if err := c.ShouldBindJSON(&task); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			} else {
+				insertedId, err := controller.TaskUsecase.AddTask(jwtClaims["role"].(string), jwtClaims["user_id"].(string), task)
+				if err == nil {
+					c.JSON(http.StatusAccepted, gin.H{"Task Insered at ID": insertedId})
+				} else {
+					c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				}
+			}
+		}
+	}
+}
 func (controller *Controller) UpdateTaskByID(c *gin.Context) {
+	id := c.Param("id")
+	if claims, ok := c.Get("claims"); !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not find token claims"})
+		c.Abort()
+		return
+	} else {
+		if jwtClaims, ok := claims.(jwt.MapClaims); !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not converts claims"})
+			c.Abort()
+			return
+
+		} else {
+			var task domain.Task
+			if err := c.ShouldBindJSON(&task); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			} else {
+				err := controller.TaskUsecase.UpdateTaskByID(jwtClaims["role"].(string), jwtClaims["user_id"].(string), task, id)
+				if err == nil {
+					c.JSON(http.StatusAccepted, gin.H{"Message": "successfully updated"})
+				} else {
+					c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				}
+			}
+		}
+	}
 
 }
-func (controller *Controller) DeleteTaskByID(c *gin.Context) {}
+func (controller *Controller) DeleteTaskByID(c *gin.Context) {
+	id := c.Param("id")
+	if claims, ok := c.Get("claims"); !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not find token claims"})
+		c.Abort()
+		return
+	} else {
+		if jwtClaims, ok := claims.(jwt.MapClaims); !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not converts claims"})
+			c.Abort()
+			return
+
+		} else {
+			err := controller.TaskUsecase.DeleteTaskByID(jwtClaims["role"].(string), jwtClaims["user_id"].(string), id)
+			if err == nil {
+				c.JSON(http.StatusAccepted, gin.H{"Message": "successfully Deleted"})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+
+			}
+		}
+	}
+}
