@@ -24,11 +24,12 @@ func Setup(r *gin.Engine) *gin.Engine {
 
 	service := infrastucture.NewService()
 	middleare := infrastucture.NewMiddleware(service)
+	password := infrastucture.NewPassword()
 
-	userRepo := repositories.NewUserRepository(*database.Database, *database.UserCollection)
+	userRepo := repositories.NewUserRepository(*database.Database, *database.UserCollection, *password)
 	taskRepo := repositories.NewTaskRepository(database, *database.Database, *database.TaskCollection)
 
-	userUsecase := usecases.NewUserUsecase(userRepo)
+	userUsecase := usecases.NewUserUsecase(userRepo, *password)
 	taskUsecase := usecases.NewTaskUsecase(taskRepo)
 
 	c := controller.NewController(userUsecase, taskUsecase)

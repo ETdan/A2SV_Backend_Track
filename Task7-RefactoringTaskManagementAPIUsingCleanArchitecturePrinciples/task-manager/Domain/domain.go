@@ -49,3 +49,7 @@ type TaskRepository interface {
 	GetTaskByID(role string, user_id string, task_id string, duration time.Duration) (Task, error)
 	GetAllTasks(role string, user_id string, duration time.Duration) ([]Task, error)
 }
+type PasswordInterface interface {
+	ValidatePasswordHash(existingUserPassword string, claimPassword string) error
+	GeneratePasswordHash(existingUserPassword string, claimPassword string) ([]byte, error)
+}

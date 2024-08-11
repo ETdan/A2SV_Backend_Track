@@ -87,7 +87,7 @@ func (controller *Controller) GetAllTasks(c *gin.Context) {
 				if len(tasks) == 0 {
 					c.JSON(http.StatusOK, gin.H{"tasks:": "this user got no tasks"})
 				} else {
-					c.JSON(http.StatusOK, gin.H{"tasks:": tasks})
+					c.JSON(http.StatusOK, gin.H{"tasks:": tasks, "task_count": (len(tasks))})
 				}
 			}
 		}

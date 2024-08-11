@@ -2,6 +2,7 @@ package repositories
 
 import (
 	domain "TaskManager/task-manager/Domain"
+	infrastucture "TaskManager/task-manager/Infrastucture"
 	"context"
 	"errors"
 
@@ -12,14 +13,16 @@ import (
 )
 
 type UserRepository struct {
-	db         mongo.Database
-	collection mongo.Collection
+	db              mongo.Database
+	collection      mongo.Collection
+	PasswordService infrastucture.PasswordService
 }
 
-func NewUserRepository(db mongo.Database, collection mongo.Collection) *UserRepository {
+func NewUserRepository(db mongo.Database, collection mongo.Collection, password infrastucture.PasswordService) *UserRepository {
 	return &UserRepository{
-		db:         db,
-		collection: collection,
+		db:              db,
+		collection:      collection,
+		PasswordService: password,
 	}
 }
 
@@ -46,7 +49,7 @@ func (r *UserRepository) GetUserByID(id primitive.ObjectID) (domain.User, error)
 func (r *UserRepository) CreateUser(user domain.User) (domain.User, error) {
 	user.ID = primitive.NewObjectID()
 	user.Role = "user"
-	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	password, err := r.PasswordService.GeneratePasswordHash(user.Password)
 	if err != nil {
 		return domain.User{}, errors.New("Could not generate bycrpt from password")
 	}

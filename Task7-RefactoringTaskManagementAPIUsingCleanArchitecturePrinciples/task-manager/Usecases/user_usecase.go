@@ -6,17 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"time"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase struct {
-	UserRepository domain.UserRepository
+	UserRepository  domain.UserRepository
+	PasswordService infrastucture.PasswordService
 }
 
-func NewUserUsecase(repository domain.UserRepository) *UserUsecase {
+func NewUserUsecase(repository domain.UserRepository, password infrastucture.PasswordService) *UserUsecase {
 	return &UserUsecase{
-		UserRepository: repository,
+		UserRepository:  repository,
+		PasswordService: password,
 	}
 }
 
@@ -68,7 +68,7 @@ func (u *UserUsecase) LoginUser(user domain.User) (string, error) {
 
 	if err == nil {
 		// set a jwt service
-		if bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(user.Password)) != nil {
+		if u.PasswordService.ValidatePasswordHash(existingUser.Password, user.Password) != nil {
 			return "", errors.New("Invalid username or password")
 		}
 		fmt.Println("existing user", existingUser.ID)
