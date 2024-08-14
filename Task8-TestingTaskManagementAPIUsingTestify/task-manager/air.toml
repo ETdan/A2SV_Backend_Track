@@ -1,0 +1,10 @@
+# .air.toml
+[build]
+  bin = "./Delivery/main" # Binary output path.
+  cmd = "go build -o task-manager/Delivery/main task-manager/Delivery/main.go" # Build command.
+  include_ext = ["go"]
+  exclude_dir = ["vendor", "build"]
+
+[server]
+  cmd = "./Delivery/main" # Command to run the built binary.
+  include_ext = ["go"]
